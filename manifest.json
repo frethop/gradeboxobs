@@ -1,0 +1,9 @@
+{
+  "id": "gradebox-plugin",
+  "name": "Gradebox",
+  "version": "0.1.0",
+  "description": "Welcome to the Gradebox plugin.",
+  "author": "frethop",
+  "minAppVersion": "1.0",
+  "isDesktopOnly": false
+}
