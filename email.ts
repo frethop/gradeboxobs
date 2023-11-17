@@ -2,7 +2,7 @@ import Email from "https://smtpjs.com/v3/smtp.js";
 import { EmailerSettings } from './settings'
 import { Setting } from 'obsidian';
 import  Utilities  from './utilities/Utilities';
-import nodemailer from 'nodemailer';
+//import nodemailer from 'nodemailer';
 
 // try {
 //   const nmailer = require('node_modules/nodemailer');
@@ -17,7 +17,7 @@ import nodemailer from 'nodemailer';
   
 export class Emailer {
 
-    emailWorks: boolean = true;
+    emailWorks: boolean = false;
     
     message: string;
     html: string;
