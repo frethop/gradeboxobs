@@ -179,7 +179,12 @@ export class Template {
             },
             {pattern: "%score:",
                 process: (old: string, stud: Student) => {
-                     return old;
+                    const regex = /%score:(.*?)%/g;
+                    let matches = old.match(regex);
+                    if (matches == null) return old;
+                    matches.forEach( (match) => {
+                       // WHAT??? 
+                    })
                 }
             },
             {pattern: "%finalscore%",

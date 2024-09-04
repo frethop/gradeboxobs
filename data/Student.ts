@@ -1,8 +1,9 @@
+import { ButtonComponent, TFile, TextComponent } from "obsidian"
+
 import { Category } from "./Category";
 import { Counter } from "./Counter";
 import { GradeSet } from "./GradeSet";
 import { Score } from "./Score";
-import { TFile } from "obsidian"
 import Utilities from "../utilities/Utilities";
 
 export class Student {
@@ -125,22 +126,31 @@ export class Student {
         let row = tbody.createEl("tr");
         
         this.studentImage = null;
-        if (this.data.get("image") !== undefined) {
-            let cell = row.createEl("td", { cls: style });
-            let hei: HTMLImageElement = cell.createEl("img"); 
+        let cell = row.createEl("td", { cls: style });
+        let hei: HTMLImageElement = cell.createEl("img"); 
+        if (this.data.get("image") == undefined) {
+            hei.src = "https://rizzo.hope.edu/~jipping/noimage.png";
+            this.data.set("image", "https://rizzo.hope.edu/~jipping/noimage.png");
+        } else {
             hei.src = this.data.get("image");
-            hei.height = 100;
-            this.studentImage = hei;
+        }
+        hei.onerror = function() { 
+            hei.src = "https://rizzo.hope.edu/~jipping/noimage.png"; 
+            this.data.set("image", "https://rizzo.hope.edu/~jipping/noimage.png");
+            this.data.set("imageModified", "true");
+            this.data.set("dataModified", "true");
+        }
+        hei.height = 100;
+        this.studentImage = hei;
 
-            if (this.notes !== undefined && this.notes !== null && this.notes.length > 0) {
-                cell.createEl("br");
-                cell.innerHTML += this.scrolltextIcon;
-            }
+        if (this.notes !== undefined && this.notes !== null && this.notes.length > 0) {
+            cell.createEl("br");
+            cell.innerHTML += this.scrolltextIcon;
         }
 
         let fscore = Utilities.fixToPlaces(finalScore);
 
-        let cell = row.createEl("td", { cls: style });
+        cell = row.createEl("td", { cls: style });
         cell.createEl("h3", {text: this.data.get("name"), cls: style});
         if (finalWithWeights == -1) 
             cell.createEl("h4", {text: ""+fscore, cls: style});
@@ -219,6 +229,35 @@ export class Student {
         this.scores.set(key, value);
     }
 
+    renameCategory(oldName: string, newName: string) {
+        console.log("RENAMING "+oldName+" to "+newName);
+        let newScores = new Map<string, number>();
+        this.scores.forEach( (value: number, key: string) => {
+            let parts = key.split("|");
+            if (parts[0] === oldName) {
+                newScores.set(newName+"|"+parts[1], value);
+                console.log("REPLACING "+key+" with "+newName+"|"+parts[1]);
+                this.dataModified = true;
+            } else {
+                newScores.set(key, value);
+            }
+        })
+        this.scores = newScores;
+    }
+
+    renameScore(oldName: string, newName: string) {
+        console.log("RENAMING "+oldName+" to "+newName);
+        //let newScores = new Map<string, number>();
+        this.scores.forEach( (value: number, key: string) => {
+            if (key === oldName) {
+                this.scores.set(newName, value);
+                this.scores.delete(oldName);
+                console.log("REPLACING "+key+" with "+newName);
+                this.dataModified = true;
+            }
+        })
+    }
+
     setFromPair({ name, value}: {name: string, value: number}, addToData=true) {
         if (this.scores.get(name) === undefined && addToData) {
             this.noteData += "\n#score "+name+"|"+value;
@@ -281,8 +320,32 @@ export class Student {
         })
     }
 
+    updateCounterName(name: string, counter: Counter) {
+        this.counters.forEach( (c: Counter) => {
+            if (c.name === name) {
+                c.name = counter.name;
+            }
+        })
+    }
+
     setNotes(notes: string) {
         this.notes = notes;
+    }
+
+    imageExists(image_url: string) {
+
+        var http = new XMLHttpRequest();
+    
+        try {
+            http.open('HEAD', image_url, false);
+            http.send();
+            console.log(http);
+            return http.status != 404;
+        } catch (e) {
+            console.log("Error in imageExists: "+e);
+            return false;
+        }
+
     }
 
     generateMarkdown(gradeSet: GradeSet) {
@@ -290,7 +353,15 @@ export class Student {
     
         // Title 
         studentNote += "----\n# "+this.data.get("name")+'\n';
-        studentNote += "![image|100]("+this.data.get("image")+')\n';
+
+        // Image
+        let im = this.data.get("image");
+        if (this.data.get("image") == undefined) {
+            this.data.set("image", "https://rizzo.hope.edu/~jipping/noimage.png");
+            im = "https://rizzo.hope.edu/~jipping/noimage.png";
+        } 
+        studentNote += "<img src=\""+im+"\" width=75 >\n\n";
+  
         studentNote += " - ID: "+this.data.get("id")+'\n';
         studentNote += " - Email: "+this.data.get("emailaddress")+"\n";
         studentNote += "\n----\n"; 
@@ -372,5 +443,125 @@ export class Student {
         return xml;
       }
     
+      generateEditHTML(container: Element, gradeSet: GradeSet) {
+  
+        //container.empty();
+  
+        let infoContainer = container.createDiv();
+        infoContainer.createEl("hr");
+        
+        // Student info
+        infoContainer.createEl("h2", { text: "Student Information" });
+        let infoTable = infoContainer.createEl("table");  
+        let infoRow = infoTable.createEl("tr");
+        let infoCell = infoRow.createEl("td", { text: "Name:"});
+        infoCell = infoRow.createEl("td");
+        let editName = new TextComponent(infoCell);
+        editName.setValue(this.data.get("name"));
+        editName.onChange( (value) => {
+            this.data.set("name", value);
+        });
+        infoRow = infoTable.createEl("tr");
+        infoCell = infoRow.createEl("td", { text: "ID:"});
+        infoCell = infoRow.createEl("td");
+        let editID = new TextComponent(infoCell);
+        editID.setValue(this.data.get("id"));
+        editID.onChange( (value) => {
+            this.data.set("id", value);
+        });
+        infoRow = infoTable.createEl("tr");
+        infoCell = infoRow.createEl("td", { text: "Email Address:"});
+        infoCell = infoRow.createEl("td");
+        let editAddr = new TextComponent(infoCell);
+        editAddr.setValue(this.data.get("emailaddress"));
+        editAddr.onChange( (value) => {
+            this.data.set("emailaddress", value);
+        });
+        infoRow = infoTable.createEl("tr");
+        infoCell = infoRow.createEl("td", { text: "Image:"});
+        infoCell = infoRow.createEl("td");
+        let imageAddr = new TextComponent(infoCell);
+        imageAddr.inputEl.setAttribute("style", "width: 300%;");
+        imageAddr.setValue(this.data.get("image"));
+        imageAddr.onChange( (value) => {
+            this.data.set("image", value);
+        });
+
+        infoContainer.createEl("hr");
+
+        // Absences
+        if (this.absences.length > 0) {
+          let abContainer = container.createDiv();
+          abContainer.createEl("h2", { text: "Absences" });
+          let abTable = abContainer.createEl("table");  
+          this.absences.forEach( (abs) => {
+            let abRow = abTable.createEl("tr");
+            let abCell = abRow.createEl("td");
+            let editAddr = new TextComponent(abCell);
+            editAddr.setValue(abs.toLocaleDateString('en-us', { year:"numeric", month:"short", day:"numeric"}));
+            editAddr.onChange( (value) => {
+                let orig = abs;
+                abs = new Date(value);
+                this.absences[this.absences.indexOf(orig)] = abs;
+            });
+            abCell = abRow.createEl("td");
+            let delButton = new ButtonComponent(abCell);
+            delButton.setButtonText("Delete");
+            delButton.onClick( () => {
+                this.absences.splice(this.absences.indexOf(abs), 1);
+                abRow.remove();
+            });
+          });
+          abContainer.createEl("hr");
+        }
+
+
+        // Counters
+        if (this.counters.length > 0) {
+          let coContainer = container.createDiv();
+          coContainer.createEl("h2", { text: "Counters" });
+          let coTable = coContainer.createEl("table");  
+          this.counters.forEach( (cnt) => {
+            let coRow = coTable.createEl("tr");
+            let coCell = coRow.createEl("td", { text: cnt.name});
+            coCell = coRow.createEl("td");
+            let editCounter = new TextComponent(coCell);
+            editCounter.setValue(""+cnt.value);
+            editCounter.onChange( (value) => {
+              cnt.value = Number(value);
+            });
+          });
+          coContainer.createEl("hr");
+        }
+
+        // Scores
+        let scoreContainer = container.createDiv();
+        if (this.scores.size > 0) {
+          scoreContainer.createEl("h2", { text: "Scores" });
+    
+          gradeSet.categories.forEach( (cat: Category) => {
+            scoreContainer.createEl("h3", { text: cat.name });
+
+            if (cat.scoreSet != undefined) {
+                let scTable = scoreContainer.createEl("table");    
+                cat.scoreSet.forEach( (sc: Score) => {  
+                    let scRow = scTable.createEl("tr");  
+                    scRow.createEl("td", { attr: {width: "25px" }});
+                    let scCell = scRow.createEl("td", { text: sc.name });  
+                    scCell = scRow.createEl("td");
+                    let editScoreValue = new TextComponent(scCell);
+                    let score = this.get(cat, sc.name);
+                    editScoreValue.setValue(""+score);
+                    editScoreValue.onChange( (value) => {
+                        this.set(cat, sc.name, Number(value));
+                    });
+                });
+            } else {
+                scoreContainer.createEl("p", { text: "No Scores"});
+            }
+        });
+    }
+}
+        
 
 }

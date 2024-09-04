@@ -8,6 +8,10 @@ export class Counter {
         this.value = 0;
     }
 
+    set(value: number) {
+        this.value = value;
+    }
+
     increment() {
         this.value++;
     }

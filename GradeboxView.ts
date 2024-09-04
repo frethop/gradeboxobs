@@ -3,11 +3,14 @@ import { StudentView, VIEW_TYPE_STUDENT } from "StudentView";
 
 import { AddAbsenceModal } from "modals/AddAbsenceModal";
 import { Alert } from "./utilities/alert";
+import { Category } from "data/Category";
 import { Counter } from "data/Counter";
 import { Emailer } from "./email";
 import { EmailerModal } from "modals/EmailerModal";
 import { GradeSet } from "data/GradeSet";
 import GradeboxPlugin from "main";
+import { NewCategoryModal } from "modals/NewCategoryModal";
+import { NewCounterModal } from "modals/NewCounterModal";
 import { NewReminderModal } from "modals/NewReminderModal";
 import { NewScoreModal } from "modals/NewScoreModal";
 import { NewStudentModal } from "modals/NewStudentModal";
@@ -42,6 +45,8 @@ export class GradeboxView extends ItemView {
   filetypes: string[];
   colorized: boolean;
 
+  listview: boolean;
+
   constructor(leaf: WorkspaceLeaf, plugin: GradeboxPlugin) {
     super(leaf);
 
@@ -55,6 +60,7 @@ export class GradeboxView extends ItemView {
     this.filetypes = [ "pdf", "docx", "txt", "xlsx" ];
 
     this.colorized = false;
+    this.listview = false;
 
     this.register(
       this.containerEl.onWindowMigrated(() => {
@@ -94,7 +100,7 @@ export class GradeboxView extends ItemView {
       new EmailerModal(this.app, this.plugin.settings, 
                        async (message: string, from: string, address: string, subject: string, includeScores: boolean, filesDir: FileList) => {
                           if (address == "#class") {
-                            let progress = new Progress(this.plugin, `Sending email`, "GradeBox is a plugin for Obsidian Buddy", "10");
+                            let progress = new Progress(this.plugin, `Sending email`, "GradeBox is a plugin for Obsidian Buddy", "All email messages sent.", this.gradeSet.getStudents());
                             progress.open();
                             const sendingDelay = parseInt(this.plugin.settings.delay)*1000;
                             const semaphore = new Semaphore(1);
@@ -122,8 +128,6 @@ export class GradeboxView extends ItemView {
                                 progress.update();
                               });
                             });
-                            progress.close();
-                            new Alert(this.plugin, "Email Sent", "All email messages sent.").open();
 
                           } else {
                             let email = new Emailer();
@@ -196,6 +200,13 @@ export class GradeboxView extends ItemView {
     this.addAction("lucide-calendar-plus", "Add an absence", () => {
 		  new AddAbsenceModal(this.app, this.gradeSet, (absences: Date[]) => {
           this.gradeSet.addAbsences(absences);
+          this.gradeSet.writeGradeSet();
+          this.display();
+      }).open();
+    });
+    this.addAction("lucide-calculator", "Add a counter", () => {
+		  new NewCounterModal(this.app, this.gradeSet, (counter: Counter) => {
+          this.gradeSet.addCounter(counter);
           this.gradeSet.writeGradeSet();
           this.display();
       }).open();
@@ -334,7 +345,12 @@ export class GradeboxView extends ItemView {
     console.log("USING "+file+" FOR IMPORT, Comparing to "+this.app.vault.adapter.basePath);
     // Process
     let pos = file.indexOf(this.app.vault.adapter.basePath);
-    if (pos >= 0) file = file.replace(this.app.vault.adapter.basePath+"\\", "");
+    if (pos < 0) {
+      new Alert(rent.plugin, "Error", "You must choose a file in the vault").open();
+      return;
+    } else {
+      file = file.replace(this.app.vault.adapter.basePath+"\\", "");
+    }
     file = file.replace(/\\/g, "/");
     console.log(file);
     let tfile = this.app.vault.getAbstractFileByPath(file) as TFile;
@@ -391,7 +407,6 @@ export class GradeboxView extends ItemView {
             fieldModal.close();
             // set up positions
             for (let i = 0; i < setting.length; i++) {
-              //console.log(setting[i]);
               let val: string = setting[i].components[0].getValue();
               if (val !== "ignored") positions[val] = i;
             }
@@ -405,7 +420,9 @@ export class GradeboxView extends ItemView {
               }
               stud.data.set("name", sname.replaceAll('"', '').trim());
               stud.data.set("id", line[positions["ID"]].replaceAll('"', '').trim());
-              stud.data.set("emailaddress", line[positions["email address"]].replaceAll('"', '').trim());
+              if (line[positions["email address"]] != undefined) {
+                stud.data.set("emailaddress", stud.data.get("emailaddress").replaceAll('"', '').trim());
+              }
               stud.data.set("image", "https://plus.hope.edu/Photos/000"+line[positions["ID"]].replaceAll('"', '').trim()+'.jpg');
               console.log(stud);
 
@@ -421,7 +438,7 @@ export class GradeboxView extends ItemView {
                  datastr += "#emailaddress "+stud.data.get("emailaddress")+"\n";
               if (stud.data.get("mobilePhoneNumber") !== undefined) 
                  datastr += "#mobilePhoneNumber "+stud.data.get("mobilePhoneNumber")+"\n";  
-               if (stud.data.get("image") !== undefined) 
+              if (stud.data.get("image") !== undefined) 
                  datastr += "#image "+stud.data.get("image")+"\n";  
               console.log(datastr)      
               app.vault.append(studentFile, datastr);
@@ -530,6 +547,7 @@ export class GradeboxView extends ItemView {
       .setIcon('lucide-grip')
       .setSection('pane')
       .onClick( async () => {
+        this.listview = false;
         this.display();
       }
     )});
@@ -540,6 +558,7 @@ export class GradeboxView extends ItemView {
       .setIcon('lucide-layout-list')
       .setSection('pane')
       .onClick( async () => {
+        this.listview = true;
         this.displayList();
       }
     )});
@@ -557,6 +576,47 @@ export class GradeboxView extends ItemView {
         }).open();
       }
     )});
+    menu
+    .addItem((item) => {
+     item
+      .setTitle('Add a category')
+      .setIcon('lucide-layout-list')
+      .setSection('pane')
+      .onClick( async () => {
+        new NewCategoryModal(this.app, (category: Category) => {
+          if (category !== undefined) this.gradeSet.addCategory(category);
+          console.log(this.gradeSet.reminders);
+          this.display();
+        }).open();
+      }
+    )});
+    menu
+    .addItem((item) => {
+     item
+      .setTitle('Generate class list')
+      .setIcon('lucide-layout-list')
+      .setSection('pane')
+      .onClick( async () => {
+          // Here we email the student note
+          const file: TFile = await (
+            app.fileManager as any
+            ).createNewMarkdownFile(app.workspace.getActiveFile()?.path, /*this.gradeSet.properties.get("title")*/"classlist.md"); 
+          
+          let liststring = "# Class List for "+this.gradeSet.properties.get("title")+"\n\n";
+          liststring += '| Name | ID | Email |\n'
+          liststring += `|:---|:---:|:---|\n`;
+          this.gradeSet.students.forEach( (stud: Student) => {
+            liststring += `| ${stud.data.get("name")} `;
+            liststring += `| ${stud.data.get("id")} `;
+            liststring += `| ${stud.data.get("emailaddress")} `;
+            liststring += '|\n';
+            
+          });
+          this.plugin.app.vault.append(file, liststring);
+        });
+
+        });
+
     menu
     .addItem((item) => {
      item
@@ -681,24 +741,28 @@ export class GradeboxView extends ItemView {
     }
 
   display() {
-    console.log("DISPLAYING...colorized = "+this.colorized);
-    this.container.empty();
-    this.displayText = this.plugin.version;
-    const div = this.container.createEl("div", { cls: "view-style" });
-    let width = this.containerEl.win.innerWidth;
-    if (this.gradeSet != null) {
-      this.displayText = this.gradeSet.properties.get("title");
-      if (this.colorized) {
-        this.gradeSet.display(div, width, 
-                              this.plugin.settings.colorDivider1,
-                              this.plugin.settings.colorDivider2);
-      } else {
-        console.log("DISPLAY: "+this.gradeSet.reminders);
-        this.gradeSet.display(div, width);
+    if (this.listview) {
+      this.displayList();
+    } else {
+        console.log("DISPLAYING...colorized = "+this.colorized);
+        this.container.empty();
+        this.displayText = this.plugin.version;
+        const div = this.container.createEl("div", { cls: "view-style" });
+        let width = this.containerEl.win.innerWidth;
+        if (this.gradeSet != null) {
+          this.displayText = this.gradeSet.properties.get("title");
+          if (this.colorized) {
+            this.gradeSet.display(div, width, 
+                                  this.plugin.settings.colorDivider1,
+                                  this.plugin.settings.colorDivider2);
+          } else {
+            console.log("DISPLAY: "+this.gradeSet.reminders);
+            this.gradeSet.display(div, width);
+          }
+          this.statusbarElement.setText(""+this.gradeSet.getStudents()+" students");
+        }
       }
-      this.statusbarElement.setText(""+this.gradeSet.getStudents()+" students");
     }
-  }
 
   displayList() {
     this.container.empty();
@@ -736,6 +800,8 @@ constructor(app: App, gs: GradeSet, callbackOnClose: (view: GradeboxView, gs: Gr
 }
 
 onOpen() {
+    new Setting(this.contentEl).setName("Importing is very picky!").
+       setDesc("The file to be imported must be in the vault.  The file will be imported as a CSV file.");
     const setting1 = new Setting(this.contentEl).setName("Choose CSV File").setDesc("Choose CSV data file to import");
     const inputDataFile = setting1.controlEl.createEl("input", {
         attr: {

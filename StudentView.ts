@@ -1,6 +1,6 @@
 import './utilities/codemirror'
 
-import { ItemView, MarkdownRenderer, Menu, Platform, TFile, TextFileView, ViewState, WorkspaceLeaf } from "obsidian";
+import { Editor, ItemView, MarkdownRenderer, MarkdownView, Menu, Platform, TFile, TextComponent, TextFileView, ViewState, WorkspaceLeaf } from "obsidian";
 
 import { Alert } from "utilities/alert";
 import { Category } from "data/Category";
@@ -39,10 +39,11 @@ export class StudentView extends ItemView {
   saveElement: HTMLElement;
 
   // internal code mirror instance
-  codeMirror: CodeMirror.Editor;
+  editor: Editor;
 
   mode: number;
   studentData: string;
+  backupData: string;
   dataChanged: boolean;
 
   whatifmode: boolean;
@@ -59,18 +60,10 @@ export class StudentView extends ItemView {
     this.navigation = true;
     this.plugin = plugin;
     this.gradeSet = gradeSet;
-
-        // create code mirror instance
-        this.codeMirror = CodeMirror(this.extContentEl, {
-          theme: "obsidian"
-        });
-        // register the changes event
-        //this.codeMirror.on('change', this.changed);
       
     this.mode = EDITING_MODE;
     this.dataChanged = false;
     this.whatifmode = false;
-
   }
 
   getViewType() {
@@ -87,7 +80,6 @@ export class StudentView extends ItemView {
     this.student = this.plugin.currentStudent;
     console.log(this.student.noteData);
     this.studentData = this.student.noteData; //await this.app.vault.read(this.student.sourceFile);
-    this.codeMirror.setValue(this.studentData);
     console.log("StudentView data: "+this.studentData);
 
     this.previewElement = this.addAction("lucide-book-open", "preview", () => {
@@ -148,13 +140,10 @@ export class StudentView extends ItemView {
       var mm = today.getMonth()+1; 
       var yyyy = today.getFullYear();
       
-      this.studentData += "\n#absence "+mm+"/"+dd+"/"+yyyy;
-      this.setViewData(this.studentData, true);
-      this.student.configureFromData(this.studentData);
+      this.student.addAbsence(today);
       this.plugin.gradeSet.modified = true;
       this.dataChanged = true;
       this.redisplay();
-      //new Alert(this.plugin, "Absence Added", "An absence has been added to this student.").open();
     });
     
     this.mode = EDITING_MODE;  // force view to generate preview first
@@ -253,7 +242,13 @@ export class StudentView extends ItemView {
       .setIcon('shield-question')
       .setSection('pane')
       .onClick( () => {
+        console.log("What if mode---------------------------------------------------");
         this.whatifmode = !this.whatifmode;
+        if (this.whatifmode) {
+          this.backupData = this.studentData;
+        } else {
+          this.studentData = this.backupData;
+        }
         this.redisplay(); 
       });
     });              
@@ -278,9 +273,10 @@ export class StudentView extends ItemView {
       this.container.empty();
       const div = this.container.createEl("div", { cls: "view-style" });
       let studentNote = this.student.generateMarkdown(this.gradeSet);
+      if (this.whatifmode) studentNote = "# What if mode is on\n" + studentNote;
       let markdown = MarkdownRenderer.render(this.app, studentNote, div, null, null);
     } else {
-      this.codeMirror.setValue(this.studentData);
+      //this.codeMirror.setValue(this.studentData);
     }  
   }
 
@@ -289,19 +285,20 @@ export class StudentView extends ItemView {
 
     this.mode = PREVIEW_MODE;
 
-    this.studentData = this.codeMirror.getValue();
+    //this.studentData = this.codeMirror.getValue();
     if (typeof this.student == 'undefined') this.student = new Student(null);
-    this.student.configureFromData(this.studentData);
+    //this.student.configureFromData(this.studentData);
 
     this.container = this.containerEl.children[1];
     this.container.empty();
     const div = this.container.createEl("div", { cls: "view-style" });
     let studentNote = this.student.generateMarkdown(this.gradeSet);
+    if (this.whatifmode) studentNote = "# What if mode is on\n" + studentNote;
+    console.log(studentNote);
     let markdown = MarkdownRenderer.render(this.app, studentNote, div, null, null);
 
     this.editElement.show();
     this.previewElement.hide();
-
   }
 
   async setEditingMode() {
@@ -309,17 +306,15 @@ export class StudentView extends ItemView {
 
     this.mode = EDITING_MODE;
 
+    this.container = this.containerEl.children[1];
     this.container.empty();
-    this.codeMirror = CodeMirror(this.extContentEl, {
-      theme: "obsidian"
-    });
-    this.codeMirror.on('change', (instance: CodeMirror.Editor) => {
-      this.dataChanged = true;
-      this.studentData = this.getViewData();
-    });
 
-    this.setViewData(this.studentData, true);
-    this.plugin.gradeSet.modified = true;
+    if (this.whatifmode) this.container.createEl("h1", { text: "What if mode is on" });
+    this.student.generateEditHTML(this.container, this.gradeSet);
+
+    //this.setViewData(this.studentData, true);
+    this.plugin.gradeSet.modified = ! this.whatifmode;
+    this.dataChanged = ! this.whatifmode;
 
     this.editElement.hide();
     this.previewElement.show();
@@ -328,15 +323,18 @@ export class StudentView extends ItemView {
   async onClose() {
     console.log("StudentView Closing");
     console.log(this.whatifmode);
-    if (this.dataChanged && !this.whatifmode) {
-      if (this.mode == EDITING_MODE) {
-        console.log("StudentView Data Changed");
-        //this.studentData = this.getViewData();
-        console.log(this.studentData);
-        this.student.configureFromData(this.studentData);
+    if (this.whatifmode) {
+      this.studentData = this.backupData;
+    } else if (this.dataChanged) {
+        if (this.mode == EDITING_MODE) {
+          console.log("StudentView Data Changed");
+          //this.studentData = this.getViewData();
+          console.log(this.studentData);
+          //this.student.configureFromData(this.studentData);
+        }
+        this.gradeSet.writeGradeSet();
       }
-      this.gradeSet.writeGradeSet();
-    }
+  
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_STUDENT);
     this.plugin.gradeBoxView.display()
   }
@@ -348,7 +346,6 @@ export class StudentView extends ItemView {
 
     // when the view is resized, refresh CodeMirror (thanks Licat!)
     onResize() {
-      this.codeMirror.refresh();
     }
   
     // called on code mirror changes
@@ -360,26 +357,20 @@ export class StudentView extends ItemView {
   
     // get the new file contents
     getViewData = () => {
-      return this.codeMirror.getValue();
+      return "";
     }
 
     // set the file contents
     setViewData = (data: string, clear: boolean) => {
-      console.log("SETVIEWDATA");
+      console.log("SETVIEWDATA, clear: "+clear);
       console.log(data);
-      if (clear) {
-        this.codeMirror.swapDoc(CodeMirror.Doc(data, "text/x-grd"))
-      }
-      else {
-        this.codeMirror.setValue(data);
-      }
-      this.studentData = data;
     }
   
     // clear the view content
     clear = () => {
-      this.codeMirror.setValue('');
-      this.codeMirror.clearHistory();
     }
+
+
+  
   
 }

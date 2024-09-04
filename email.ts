@@ -86,7 +86,7 @@ export class Emailer {
             secure: settings.secure, 
             auth: {
               user: settings.username,
-              pass: settings.password
+              pass: settings.password  
             }
           });
         let count = 0;
@@ -102,6 +102,7 @@ export class Emailer {
               console.log('Email sent: ' + info.response);
             }
           });
+          
         }        
     }  
     

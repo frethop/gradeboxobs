@@ -34,9 +34,12 @@ export class CounterTick extends Modal {
         titleDiv.createEl("h2", { text: 'Tick a Counter' });
         titleDiv.createEl("hr");
         
+        let counterContainer = form.createDiv();
+        let counterTable = counterContainer.createEl("table", { cls: "counter-table" });
         this.student.counters.forEach( (counter: Counter) => {
-            let counterContainer = form.createDiv();
-            let but = new ButtonComponent(counterContainer)
+            let counterRow = counterTable.createEl("tr");
+            let counterCell = counterRow.createEl("td");
+            let but = new ButtonComponent(counterCell)
                 .setButtonText("-")
                 .setIcon("minus-circle")
                 .onClick( () => {
@@ -47,8 +50,10 @@ export class CounterTick extends Modal {
             if (counter.value == 0) {
                 but.setDisabled(true);
             }
-            counterContainer.appendText("&nbsp;&nbsp;&nbsp;"+counter.name+"&nbsp;&nbsp;&nbsp;"); 
-            but = new ButtonComponent(counterContainer).setButtonText("+").setIcon("plus-circle")
+            counterCell = counterRow.createEl("td", { attr: { "text-align": "center" } });
+            counterCell.appendText(counter.name);
+            counterCell = counterRow.createEl("td");
+            but = new ButtonComponent(counterRow).setButtonText("+").setIcon("plus-circle")
                 .onClick( () => {
                     counter.increment();
                     this.callbackOnClose(counter);

@@ -86,9 +86,6 @@ export class GradeSet {
                 console.log("DEFINING GS with "+tag+' as '+definition);
                 // Score setup
                 if (tag === "#category") {
-                    if (cat !== null) {
-                        this.categories.push(cat);
-                    }
                     let props = definition.split("|");
                     cat = new Category(null);
                     cat.name = props[0].trim();
@@ -99,11 +96,20 @@ export class GradeSet {
                     cat.scoringMethod = 
                           (props.length > 3) ? parseInt(props[3]) 
                                              : Category.ScoringMethod.INDIVIDUAL_SCORE_PERCENTAGE;
+                    this.categories.push(cat);
                 } else if (tag === "#score") {
                     let props = definition.split("|");
-                    let sc = new Score(props[0].trim(), 
-                                       parseFloat(props[1]));
-                    cat.addScore(sc);
+                    if (props.length == 2) {
+                        let sc = new Score(props[0].trim(), parseFloat(props[1]));
+                        cat.addScore(sc);
+                    } else {
+                        cat = this.getCategory({ name: props[0].trim() });
+                        console.log("Adding score to "+cat.name+" with value "+props[2])
+                        if (cat != null) {
+                            let sc = new Score(props[1].trim(), parseFloat(props[2]));
+                            cat.addScore(sc);
+                        }
+                    }
                 } else if (tag === "#counter") {
                     let props = definition.split("|");
                     let counter = new Counter(props[0].trim()); 
@@ -124,7 +130,7 @@ export class GradeSet {
 
             }
         })
-        if (cat !== null) this.categories.push(cat);
+        //if (cat !== null) this.categories.push(cat);
         console.log(this);
     }
 
@@ -356,6 +362,16 @@ export class GradeSet {
         return (this.students==null)?0:this.students.length;
     }
 
+    renameCategory(oldName: string, newName: string) {
+        console.log("Renaming category "+oldName+" to "+newName);
+        this.categories.forEach( (cat) => {
+            if (cat.name === oldName) {
+                cat.name = newName;
+                this.modified = true;
+            }
+        });
+    }
+
     display(div: HTMLDivElement, width: number,
             divider1 = null, divider2 = null) {
         let titleDiv = div.createEl("div", { cls: "title-style"});
@@ -473,7 +489,7 @@ export class GradeSet {
             if (cat.scoreSet !== undefined) {
                 cat.scoreSet.forEach( (score) => {
                     let scorename = scorerow.createEl("th", { cls: "student-list-scoretitle-style" });
-                    scorename.createEl("h5", { text: score.name, });
+                    scorename.createEl("h5", { text: score.name });
                 })
             }
         });
@@ -556,7 +572,7 @@ export class GradeSet {
             this.categories.forEach( (cat) => {
                 if (cat.name === catname) {
                     category = cat;
-                    let score = new Score(name, possible, extraCredit);
+                    let score = new Score(catname+"|"+name, possible, extraCredit);
                     cat.addScore(score);
                     console.log("ADDING: ");
                     console.log(cat.scoreSet);
@@ -589,6 +605,16 @@ export class GradeSet {
         } 
     }
 
+    addCounter(counter: Counter) {
+        this.counters.push(counter);
+        if (this.students !== undefined && this.students !== null) {
+            for (let i=0; i < this.students.length; i++) {
+                this.students[i].addCounter(counter);
+            }
+            this.modified = true;
+        } 
+    }
+
     addReminder(reminder: Reminder) {
         console.log("Adding reminder "+reminder.text);
         this.reminders.push(reminder);
@@ -610,6 +636,16 @@ export class GradeSet {
         } 
 
         return cat;
+    }
+
+    addCategory( cat: Category ) {
+        this.categories.push(cat);
+        this.modified = true;
+    }
+
+    deleteCategory(cat: Category) {
+        this.categories = this.categories.filter( (c) => c.name !== cat.name);
+        this.modified = true;
     }
 
     //-----------------------------------------------------------------------

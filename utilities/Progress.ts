@@ -2,25 +2,31 @@
 
 import { App, Modal, Notice, Plugin, Setting } from 'obsidian';
 
+import { Alert } from './alert';
+
 export class Progress extends Modal {
 	plugin: Plugin;
 	title: string;
 	label: string;
 	bar: HTMLProgressElement;
-	increment: string;
+	closingMessage: string;
+	max: number;
   
 	constructor(
 		plugin: Plugin,
 		title: string,
 		label: string,
-		increment: string
+		closingMessage: string,
+		max: number
 	) {
 		super(plugin.app);
 
 		this.plugin = plugin;
 		this.title = title;
 		this.label = label;
-		this.increment = increment;
+		this.closingMessage = closingMessage;
+		this.max = max;
+
 	}
 
 	async onOpen() {
@@ -34,20 +40,26 @@ export class Progress extends Modal {
 			titleDiv.createEl("h2", { text: this.title });
 			titleDiv.createEl("hr");
 			
-			this.bar = titleDiv.createEl("progress", { attr: {value: this.increment, max: "100", width: "100%"} });
+			this.bar = titleDiv.createEl("progress", { attr: {value: 1, max: ""+this.max, width: "100%"} });
 
 		});
 	}
 
     update() {
         let intvalue = parseInt(this.bar.getAttribute("value"));
-		intvalue += parseInt(this.increment);
+		intvalue += 1;
 		this.bar.setAttribute("value", intvalue.toString());
+		if (intvalue >= this.max) {
+			this.close();
+		}
     }
 
 	onClose() {
 		let {contentEl} = this;
 		contentEl.empty();
+		if (this.closingMessage.length > 0) {
+			new Alert(this.plugin, "Done!", this.closingMessage).open();
+		}	
 	}
 
 

@@ -72,6 +72,13 @@ export class Category {
         return this.scoreSet;
     }
 
+    removeScore(score: Score) {
+        let index = this.scoreSet.indexOf(score);
+        if (index > -1) {
+            this.scoreSet.splice(index, 1);
+        }
+    }
+
     setScoringMethod(method: number) {
         this.scoringMethod = method;
     }

@@ -106,7 +106,7 @@ export default class GradeboxPlugin extends Plugin {
 
 	gradeBoxView : GradeboxView;
 
-	version: string = "1.1.2 (111723)";
+	version: string = "1.2.1 (081524)";
 
 	rotateRecentFiles(filePath: string) {
 		if (filePath.length == 0) return;
@@ -296,7 +296,6 @@ export default class GradeboxPlugin extends Plugin {
 	  async displayStudent(student: Student) {
 		console.log("DISPLAY STUDENT: "+student.data.get("name"));
 		this.currentStudent = student;
-		console.log(this.currentStudent.absences);
 
 		await app.workspace.getLeaf(true).setViewState({
 			type: VIEW_TYPE_STUDENT,
