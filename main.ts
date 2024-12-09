@@ -645,11 +645,7 @@ class GradeBoxSettingsTab extends PluginSettingTab {
 				this.plugin.settings.useTRMNL = value;
 				await this.plugin.saveSettings();
 
-				if (value) {
-					this.TRMNLpluginID.setDisabled(false);
-				} else {
-					this.TRMNLpluginID.setDisabled(true);
-				}
+				this.TRMNLpluginID.setDisabled(! value);
 		}));
 
 		this.TRMNLpluginID = new Setting(containerEl)
