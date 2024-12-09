@@ -346,7 +346,10 @@ export class GradeboxView extends ItemView {
     // let trmnl = new TRMNL(this.plugin.settings.TRMNLpluginID);
     // Create HTML to be published to TRMNL
     // trmnl.setHTML();
-    // trmnl.publishHTML();
+    // result = trmnl.publishHTML();
+    // if (! result) {
+    //   DO SOMETHING
+    // }
     }
 
   }
