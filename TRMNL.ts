@@ -14,7 +14,7 @@ export class TRMNL {
         this.html = html;
     }
 
-    publish(content: string): boolean {
+    publish(extrastuff: string): boolean {
         return true;
     }
 }
