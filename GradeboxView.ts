@@ -343,6 +343,7 @@ export class GradeboxView extends ItemView {
     }
 
     // TRMNL updates when closing the GradeboxView
+    console.log("Setting TRMNL");
     if (this.plugin.settings.useTRMNL) {
       let trmnl = new TRMNL(this.plugin.settings.TRMNLpluginID);
       
