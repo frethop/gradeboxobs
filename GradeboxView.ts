@@ -24,6 +24,7 @@ import { Template } from "utilities/Template";
 import Utilities from "utilities/Utilities";
 import { VIEW_TYPE_GRADESET_SUMMARY } from "GradeSetSummaryView";
 import { markdown } from "utilities/drawdown";
+import {TRMNL} from "TRMNL";
 
 export const VIEW_TYPE_GRADEBOX = "gradebox-view";
 
@@ -343,13 +344,18 @@ export class GradeboxView extends ItemView {
 
     // TRMNL updates when closing the GradeboxView
     if (this.plugin.settings.useTRMNL) {
-    // let trmnl = new TRMNL(this.plugin.settings.TRMNLpluginID);
-    // Create HTML to be published to TRMNL
-    // trmnl.setHTML();
-    // result = trmnl.publishHTML();
-    // if (! result) {
-    //   DO SOMETHING
-    // }
+      let trmnl = new TRMNL(this.plugin.settings.TRMNLpluginID);
+      
+      // Create HTML to be published to TRMNL
+      let title = '[{"name": "'+this.gradeSet.getTitle()+'"}]';
+      let html = "";
+      
+      trmnl.setHTML(html);
+      let result = trmnl.publish("");
+    
+      if (! result) {
+        //   DO SOMETHING
+      }
     }
 
   }
