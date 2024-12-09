@@ -99,7 +99,11 @@ export class GradeSet {
                     this.categories.push(cat);
                 } else if (tag === "#score") {
                     let props = definition.split("|");
-                    if (props.length == 2) {
+                    if (props.length == 3) {
+                        let ec = props[2].trim() == "true"
+                        let sc = new Score(props[0].trim(), parseFloat(props[1]), ec);
+                        cat.addScore(sc);
+                    } else if (props.length == 2) {
                         let sc = new Score(props[0].trim(), parseFloat(props[1]));
                         cat.addScore(sc);
                     } else {
@@ -267,7 +271,7 @@ export class GradeSet {
                 newData += "#category "+cat.name+' | '+cat.weight+' | '+cat.percentOfScores+'\n';
                 if (cat.scoreSet !== undefined)
                     cat.scoreSet.forEach( (sc: Score) => {
-                        newData += "#score "+sc.name+" | "+sc.value+"\n";
+                        newData += "#score "+sc.name+" | "+sc.value+" | "+sc.extraCredit+"\n";
                     })
             })
             console.log("NEW DATA\n"+newData);
@@ -572,7 +576,7 @@ export class GradeSet {
             this.categories.forEach( (cat) => {
                 if (cat.name === catname) {
                     category = cat;
-                    let score = new Score(catname+"|"+name, possible, extraCredit);
+                    let score = new Score(name, possible, extraCredit);
                     cat.addScore(score);
                     console.log("ADDING: ");
                     console.log(cat.scoreSet);

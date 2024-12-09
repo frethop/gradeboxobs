@@ -129,6 +129,7 @@ export class GradeSetSummaryView extends ItemView {
 
     this.editElement.hide(); 
     this.previewElement.show();
+    this.modified = true;
 
     console.log("EDIT MODE 2: modified = "+this.modified);
   }
@@ -462,6 +463,7 @@ export class GradeSetSummaryView extends ItemView {
           let catRow = catTable.createEl("tr");
           catRow.createEl("th", { text: "Score Name" });
           catRow.createEl("th", { text: "Possible" });  
+          catRow.createEl("th", { text: "Ex Cr?" });  
       
           cat.scoreSet.forEach( (sc: Score) => {
             catRow = catTable.createEl("tr");
@@ -483,6 +485,16 @@ export class GradeSetSummaryView extends ItemView {
               sc.setValue(Number(value));
               this.gradeSet.modified = true;
             }); 
+            if (sc.extraCredit) {
+              catCell = catRow.createEl("td");
+              let editEC = new TextComponent(catCell);
+              editEC.setValue(""+sc.extraCredit);
+              editEC.onChange( (value) => {
+                sc.setExtraCredit(value == "true");
+                this.gradeSet.modified = true;
+                console.log("EC = "+sc.extraCredit);
+              }); 
+            }
             catCell = catRow.createEl("td");
             let delButton = new ButtonComponent(catCell);
             delButton.setButtonText("X");

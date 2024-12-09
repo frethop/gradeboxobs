@@ -1,0 +1,35 @@
+---> ID: %id%
+
+--> name: %name%
+
+--> firstname: %firstname%
+
+--> lastname: %lastname%
+
+--> email: %emailaddress%
+
+--> class title: %title%
+
+--> number of absenses: %absencenumber%
+
+--> list of absences: %absencelist%
+
+--> list of absenses if nonzero: %absencelistifnonzero%
+
+--> a counter: %counter:COUNTER%
+
+--> list of categories: %categorylist%
+
+--> a category: %category:CATEGORY%
+
+--> list of scores: %scorelist%
+
+--> a score: %score:SCORE%
+
+--> final score: %finalscore%
+
+--> student image: %image%
+
+--> today's date: %date%
+
+

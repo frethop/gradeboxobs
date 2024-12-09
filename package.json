@@ -1,6 +1,6 @@
 {
   "name": "gradebox-plugin",
-  "version": "0.1.0",
+  "version": "1.2",
   "description": "Welcome to the Gradebox plugin.",
   "main": "main.js",
   "scripts": {
@@ -34,7 +34,7 @@
     "http": "^0.0.1-security",
     "https": "^1.0.0",
     "install": "^0.13.0",
-    "nodemailer": "^6.9.13",
+    "nodemailer": "^6.9.15",
     "path": "^0.12.7",
     "punycode": "^2.3.0"
   }

@@ -127,10 +127,10 @@ export class Template {
                      catNote += "### "+ cat.name + " (weight is "+(cat.weight*100)+"%)\n";
                      if (cat.scoreSet !== undefined && cat.scoreSet.length > 0) {
                        cat.scoreSet.forEach( (score: Score) => {
-                          catNote += "- **"+score.name+"**: ";
-                          let studentScore = stud.get(cat, score.name);
-                          if (typeof studentScore == 'undefined') studentScore = 0;
-                          catNote += "" + studentScore + " / " + score.value + "\n";
+                          catNote += "- **"+score.name+"**: "+score.value+"\n ";
+                        //   let studentScore = stud.get(cat, score.name);
+                        //   if (typeof studentScore == 'undefined') studentScore = 0;
+                        //   catNote += "" + studentScore + " / " + score.value + "\n";
                       })
                      } else {
                          catNote += "> NO SCORES\n";
@@ -147,19 +147,21 @@ export class Template {
                 let matches = old.match(regex);
                 if (matches == null) return old;
                 matches.forEach( (match) => {
+                    console.log("Looking for "+match)
                     let sides = match.split(":");
                     let cname = sides[1].replace("%", "");
                     let cat = gradeSet.getCategory({name: cname});
                     let markdown = "";
-                    if (cat == null) {
+                    console.log("Category is "+cat);
+                    if (cat !== null) {
                         let markdown = "** "+cname+" **\n";
                         if (cat.scoreSet !== undefined && cat.scoreSet.length > 0) {
                             cat.scoreSet.forEach( (score: Score) => {
                                 markdown += "> - **"+score.name+"**: ";
-                                let studentScore = this.get(cat, score.name);
-                                if (typeof studentScore == 'undefined') studentScore = 0;
+                                let studentScore = stud.get(cat, score.name);
+                                if (studentScore === undefined) studentScore = 0;
                                 markdown += "" + studentScore + " / " + score.value + "\n";
-                        })
+                            })
                         } else {
                             markdown += "> NO SCORES\n";
                         }
@@ -174,17 +176,44 @@ export class Template {
             },
             {pattern: "%scorelist%",
                 process: (old: string, stud: Student) => {
-                    return "title"
-                }
+                    let catNote = "";     
+                    if (gradeSet.categories != null) {
+                        gradeSet.categories.forEach((cat: Category) => {
+                         catNote += "### "+ cat.name + " (weight is "+(cat.weight*100)+"%)\n";
+                         if (cat.scoreSet !== undefined && cat.scoreSet.length > 0) {
+                           cat.scoreSet.forEach( (score: Score) => {
+                              catNote += "- **"+score.name+"**: ";
+                              let studentScore = stud.get(cat, score.name);
+                              if (typeof studentScore == 'undefined') studentScore = 0;
+                              catNote += "" + studentScore + " / " + score.value + "\n";
+                          })
+                         } else {
+                             catNote += "> NO SCORES\n";
+                         }
+                         catNote += "\n";
+                       });
+                    }
+                    return old.replace("%scorelist%", catNote);
+                    }
             },
-            {pattern: "%score:",
+            {pattern: "%score:",   // this must be %score:catname|scorename%
                 process: (old: string, stud: Student) => {
                     const regex = /%score:(.*?)%/g;
                     let matches = old.match(regex);
                     if (matches == null) return old;
                     matches.forEach( (match) => {
-                       // WHAT??? 
+                        let sides = match.split(":");
+                        let comboname = sides[1].replace("%", "");
+                        let sname = comboname.split("|");
+                        if (sname == null) 
+                            old = old.replace("%score:"+sides[1], "ERROR");
+                        else {
+                            let studentScore = stud.get(sname[0], sname[1]);
+                            if (studentScore == undefined) studentScore = 0;
+                            old = old.replace(match, studentScore.toString());
+                        } 
                     })
+                    return old;
                 }
             },
             {pattern: "%finalscore%",
@@ -208,8 +237,6 @@ export class Template {
                 return old.replace("%date%", dt);
             }
             },
-
-
         ]
     }
 
@@ -218,17 +245,32 @@ export class Template {
         if (message == undefined) return "";
 
         this.processPatterns.map( (pattern) => {
-            //console.log("Checking "+pattern.pattern);
+            console.log("Checking "+pattern.pattern);
             if (message.contains(pattern.pattern)) {
+                console.log("Message contains "+pattern.pattern);
+                console.log("Before processing, message is \n------------\n"+message);
                 message = pattern.process(message, student);
+                console.log("After processing, message is \n------------\n"+message);
             }
-            //console.log("Message is now "+message);
         })
 
         console.log(message);
         return message;
     }
 
-
+    basicTemplate(): string {
+        return "## Score Report for %name% for %title%\n"+
+               "***%date%***\n\n"+
+               "- ID: %id%\n"+
+               "- Email Address: %emailaddress%\n\n"+
+               "---\n"+
+               "### Absences: %absencenumber%\n"+
+               "%absencelistifnonzero%\n"+
+               "---\n"+
+               "## Scores\n"+
+               "%categorylist%\n"+
+               "---\n"+
+               "## TOTAL = %finalscore%"
+    }
 
 }

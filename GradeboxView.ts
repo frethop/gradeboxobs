@@ -100,12 +100,14 @@ export class GradeboxView extends ItemView {
       new EmailerModal(this.app, this.plugin.settings, 
                        async (message: string, from: string, address: string, subject: string, includeScores: boolean, filesDir: FileList) => {
                           if (address == "#class") {
+                            let ogMessage = message;
                             let progress = new Progress(this.plugin, `Sending email`, "GradeBox is a plugin for Obsidian Buddy", "All email messages sent.", this.gradeSet.getStudents());
                             progress.open();
                             const sendingDelay = parseInt(this.plugin.settings.delay)*1000;
                             const semaphore = new Semaphore(1);
                             this.gradeSet.students.forEach( (stud: Student) => {
                               semaphore.callFunction( async () => {
+                                message = ogMessage;
                                 let email = new Emailer();
                                 if (filesDir !== undefined) {
                                   // get the last name
@@ -193,7 +195,7 @@ export class GradeboxView extends ItemView {
         return;
       }
 		  new NewScoreModal(this.app, this.gradeSet, () => {
-        this.gradeSet.writeGradeSet()
+        this.gradeSet.writeGradeSet();
         this.display();
       }).open();
     });
@@ -756,7 +758,6 @@ export class GradeboxView extends ItemView {
                                   this.plugin.settings.colorDivider1,
                                   this.plugin.settings.colorDivider2);
           } else {
-            console.log("DISPLAY: "+this.gradeSet.reminders);
             this.gradeSet.display(div, width);
           }
           this.statusbarElement.setText(""+this.gradeSet.getStudents()+" students");

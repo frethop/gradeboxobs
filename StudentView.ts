@@ -113,8 +113,30 @@ export class StudentView extends ItemView {
         let fields = this.plugin.settings;
         fields.defaultto = this.student.data.get("emailaddress");
         new EmailerModal(this.app, fields, 
-                        (message: string, from: string, address: string, subject: string) => {
-                              new Emailer().sendmail(this.student.data.get("emailaddress"), 
+                        async (message: string, from: string, address: string, subject: string, attachScores: boolean, filesDir: FileList) => {
+                              let emailer = new Emailer();
+                              if (attachScores) {
+                                let afile = new TFile();
+                                afile.path = "attachscores.md";
+                                this.plugin.app.vault.delete(afile);
+
+                                let minimal = "Scores for %name%\n"+
+                                              "***%date%***\n\n"+
+                                              "%categorylist%\n"+
+                                              "## TOTAL = %finalscore%"
+                                let attach = new Template(this.gradeSet).process(minimal, this.student);
+
+                                const file: TFile = await (app.fileManager as any).
+                                      createNewMarkdownFile(app.workspace.getActiveFile()?.path, "attachscores"); 
+
+                                app.vault.append(file, attach);
+                                console.log(file);
+                                console.log("==========")
+                                console.log(app.workspace.getActiveFile()?.path)
+                                emailer.addAttachment(app.workspace.getActiveFile()?.path, "attachscores.md");
+                              }
+                              message = (new Template(this.gradeSet)).process(message, this.student);
+                              emailer.sendmail(this.student.data.get("emailaddress"), 
                                     from, subject, message, this.plugin.settings, console.log);
                         }
         ).open();
@@ -186,16 +208,16 @@ export class StudentView extends ItemView {
             console.log(tfile);
             template =  await app.vault.read( tfile );
           } else {
+            console.log("No template defined");
             template = "";
           }
           // Here we email the student note
             let email = new Emailer();
             let studentNote = "";
-            if (template.length > 0) {
-              studentNote = (new Template(this.gradeSet)).process(template, this.student);
-            } else {
-              studentNote = this.student.generateMarkdown(this.gradeSet);
+            if (template.length == 0) {
+              template = (new Template(this.gradeSet)).basicTemplate();
             }
+            studentNote = (new Template(this.gradeSet)).process(template, this.student);
             console.log(studentNote);
             let html = markdown(studentNote);
             console.log(html);

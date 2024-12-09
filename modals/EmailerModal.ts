@@ -71,7 +71,7 @@ export class EmailerModal extends Modal {
 		includesContainer1.createEl("p", { text: 'Attach Files?' });
 		new ToggleComponent(includesContainer1)
 					.onChange( (value) => {
-						this.attachScores = value;
+						//this.attachScores = value;
 						attachdiv.style.display = (value)?"block":"none";
 					})
 		let attachdiv = contentEl.createDiv();

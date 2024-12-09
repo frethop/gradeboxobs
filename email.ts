@@ -68,7 +68,7 @@ export class Emailer {
             from: this.from,
             to: this.to,
             subject: this.subject,
-            headers: {"X-GradeBox-Version": "Obsidian Version 1.0", "X-dev": "frethop"},
+            headers: {"X-GradeBox-Version": "Obsidian Version 1.24", "X-dev": "frethop"},
             text: this.message,
             attachments: this.attachments,
             html: this.html,
