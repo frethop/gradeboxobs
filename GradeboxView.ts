@@ -341,6 +341,10 @@ export class GradeboxView extends ItemView {
       this.app.vault.modify(xmlFile, xml);
     }
 
+    // TRMNL updates when closing the GradeboxView
+    // let trmnl = new TRMNL();
+    // 
+
   }
 
   async CSVimport(rent: GradeboxView, gs: GradeSet, file: string) {

@@ -59,6 +59,8 @@ interface GradeBoxPluginSettings {
 
 	XMLfilename: string;
 	whenToGenerate: string;
+	useTRMNL: boolean;
+	TRMNLpluginID: string;
 
 	recentFile1: string;
 	recentFile2: string;
@@ -89,6 +91,8 @@ const DEFAULT_SETTINGS: GradeBoxPluginSettings = {
 
 	XMLfilename: "grades.xml",
 	whenToGenerate: "close",
+	useTRMNL: true,
+	TRMNLpluginID: "XXXXX",
 
 	recentFile1: "",
 	recentFile2: "",
@@ -363,6 +367,7 @@ class GradeBoxSettingsTab extends PluginSettingTab {
 	usernameSetting: Setting;
 	passwordSetting: Setting;
 	secureSetting: Setting;
+	TRMNLpluginID: Setting;
 
 	constructor(app: App, plugin: GradeboxPlugin) {
 		super(app, plugin);
@@ -628,6 +633,35 @@ class GradeBoxSettingsTab extends PluginSettingTab {
 				.addOption("never", "never")
 				.setValue(this.plugin.settings.whenToGenerate)
 		);
+
+		containerEl.createEl('h2', {text: 'TRMNL Gradeset Display'});
+
+		new Setting(containerEl)
+		.setName('Display Gradeset on TRMNL?')
+		.setDesc('Whether to use TRMNL to display gradeset.')
+		.addToggle(text => text
+			.setValue(this.plugin.settings.useTRMNL)
+			.onChange(async (value) => {
+				this.plugin.settings.useTRMNL = value;
+				await this.plugin.saveSettings();
+
+				if (value) {
+					this.TRMNLpluginID.setDisabled(false);
+				} else {
+					this.TRMNLpluginID.setDisabled(true);
+				}
+		}));
+
+		this.TRMNLpluginID = new Setting(containerEl)
+		.setName('TRMNL plugin ID')
+		.setDesc('ID of the plugin on the TRMNL web site')
+		.setDisabled(! this.plugin.settings.useTRMNL)
+		.addText(text => text
+			.setValue(this.plugin.settings.TRMNLpluginID)
+			.onChange(async (value) => {
+				this.plugin.settings.TRMNLpluginID = value;
+				await this.plugin.saveSettings();
+		}));
 
 	}
 
