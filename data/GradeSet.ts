@@ -816,7 +816,7 @@ export class GradeSet {
                 //html += student.generateFirstXML();
                 if (this.categories !== undefined && this.categories !== null) {
                     this.categories.forEach( (category) => {
-                        if (category.scoreSet !== undefined && category.scoreSet !== null && category.scoreSet.length > 0 ) 
+                        //if (category.scoreSet !== undefined && category.scoreSet !== null && category.scoreSet.length > 0 ) 
                             //html += student.generateScoreXML(category);
                     })
                 }            
