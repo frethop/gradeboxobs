@@ -349,7 +349,7 @@ export class GradeboxView extends ItemView {
       
       // Create HTML to be published to TRMNL
       let first = '[{"name": "'+this.gradeSet.getTitle()+'", "students": '+this.gradeSet.getStudents()+'}]';
-      let html = "";
+      let html = "HELLO";
       
       trmnl.setHTML(html);
       let result = trmnl.publish(first);
