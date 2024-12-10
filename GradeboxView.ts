@@ -352,7 +352,7 @@ export class GradeboxView extends ItemView {
       let html = '["HELLO"]';
       
       trmnl.setHTML(html);
-      let result = trmnl.publish(first);
+      let result = trmnl.publish(JSON.parse(first));
     
       if (! result) {
         //   DO SOMETHING
