@@ -38,7 +38,10 @@ export default class Utilities {
     static fileExists(fileName: string, folder: TFolder): Boolean {
 		var res: boolean = false;
 		let file = folder.children.find(afile => afile.name === fileName);
-		return (file !== undefined);
+        if (file == null) 
+            return false;
+        else
+		    return (file !== undefined);
 	}
 
     static sleep(ms: number) {
