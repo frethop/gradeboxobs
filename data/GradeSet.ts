@@ -800,5 +800,33 @@ export class GradeSet {
         return xml;
     }
 
+    generateTRMNLHTML() { 
+        console.log("Generating HTML for TRMNL");            
+
+        let html = '';
+
+        if (this.categories !== undefined && this.categories !== null) {
+            this.categories.forEach( (category) => {
+                html += '<div class="label">'+category.name+'</div>';
+            })
+        }
+
+        if (this.students !== undefined && this.students !== null) {
+            this.students.forEach( (student) => {
+                //html += student.generateFirstXML();
+                if (this.categories !== undefined && this.categories !== null) {
+                    this.categories.forEach( (category) => {
+                        if (category.scoreSet !== undefined && category.scoreSet !== null && category.scoreSet.length > 0 ) 
+                            //html += student.generateScoreXML(category);
+                    })
+                }            
+                //html += "</student>\n";
+            })
+        }
+
+        return html;
+    }
+ 
+
 
 }
