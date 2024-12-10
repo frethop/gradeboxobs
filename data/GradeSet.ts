@@ -807,7 +807,7 @@ export class GradeSet {
 
         if (this.categories !== undefined && this.categories !== null) {
             this.categories.forEach( (category) => {
-                html += '<div class="label">'+category.name+'</div>';
+                html += "<div class='label'>"+category.name+"</div>";
             })
         }
 
