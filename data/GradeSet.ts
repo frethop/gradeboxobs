@@ -803,11 +803,11 @@ export class GradeSet {
     generateTRMNLHTML() { 
         console.log("Generating HTML for TRMNL");            
 
-        let html = '';
+        let html = "<div class='value value--xsmall'>Class ave = "+this.classAverage()+"</div>";
 
         if (this.categories !== undefined && this.categories !== null) {
             this.categories.forEach( (category) => {
-                html += "<div class='label'>"+category.name+"</div>";
+                html += "<div class='label'>"+category.name+" ("+category.weight+") </div>";
             })
         }
 
