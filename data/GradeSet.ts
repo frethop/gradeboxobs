@@ -803,27 +803,32 @@ export class GradeSet {
     generateTRMNLHTML() { 
         console.log("Generating HTML for TRMNL");            
 
-        let html = "<div class='value value--xsmall'>Class ave = "+this.classAverage()+"</div>";
+        let html = "<span class='label label--outline'>Class avg = "+this.classAverage().toFixed(2);
+        if (this.allCategoriesHaveScores()) {
+            html += "</span>";
+        } else {
+            html += "</span>";
+        }
+        html += "</div></div>";
 
         if (this.categories !== undefined && this.categories !== null) {
             this.categories.forEach( (category) => {
-                html += "<div class='label'>"+category.name+" ("+category.weight+") </div>";
-            })
-        }
+                html += "<div class='label'>&nbsp;&nbsp;&nbsp;&nbsp;"+category.name+" ("+category.weight+") ";
 
-        if (this.students !== undefined && this.students !== null) {
-            this.students.forEach( (student) => {
-                //html += student.generateFirstXML();
-                if (this.categories !== undefined && this.categories !== null) {
-                    this.categories.forEach( (category) => {
-                        //if (category.scoreSet !== undefined && category.scoreSet !== null && category.scoreSet.length > 0 ) 
-                            //html += student.generateScoreXML(category);
+                let average = 0.0;
+                if (this.students !== undefined && this.students !== null) {
+                    let total = 0.0;
+                    this.students.forEach( (student) => {
+                        total += category.studentScore(student);
                     })
-                }            
-                //html += "</student>\n";
+                    average = total / this.getStudents();
+                } 
+
+                html += "is "+ average.toFixed(2) + "</div>";
             })
         }
 
+        console.log(html);
         return html;
     }
  
