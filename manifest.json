@@ -1,7 +1,7 @@
 {
   "id": "gradebox-plugin",
   "name": "Gradebox",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Welcome to the Gradebox plugin.",
   "author": "frethop",
   "minAppVersion": "1.0",
