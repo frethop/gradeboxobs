@@ -20,11 +20,11 @@ import { ReminderPopup } from "modals/ReminderPopup";
 import { Score } from "data/Score";
 import Semaphore from "utilities/Semaphore";
 import { Student } from "data/Student";
+import {TRMNL} from "TRMNL";
 import { Template } from "utilities/Template";
 import Utilities from "utilities/Utilities";
 import { VIEW_TYPE_GRADESET_SUMMARY } from "GradeSetSummaryView";
 import { markdown } from "utilities/drawdown";
-import {TRMNL} from "TRMNL";
 
 export const VIEW_TYPE_GRADEBOX = "gradebox-view";
 
@@ -343,21 +343,67 @@ export class GradeboxView extends ItemView {
     }
 
     // TRMNL updates when closing the GradeboxView
-    console.log("Setting TRMNL");
+    console.log("Setting TRMNL "+ this.plugin.settings.useTRMNL);
     if (this.plugin.settings.useTRMNL) {
       let trmnl = new TRMNL(this.plugin.settings.TRMNLpluginID);
       
       // Create HTML to be published to TRMNL
-      let first = '[{"name": "'+this.gradeSet.getTitle()+'", "students": '+this.gradeSet.getStudents()+'}]';
-      let html = '[{"html": "'+this.gradeSet.generateTRMNLHTML()+'"}]';
+      // Delete old one if necessary
+      let filename = this.gradeSet.getTitle()+".html.md";
+      let path = this.app.vault.getAbstractFileByPath("TRMNL");
+      if (Utilities.fileExists(filename, path as TFolder)) { 
+        let taf = this.app.vault.getAbstractFileByPath("TRMNL/"+filename) as TFile;
+        console.log("Trying to delete "+taf.path)
+        if (taf !== undefined) await this.app.vault.delete(taf);
+      }
+      const TRMNLFile: TFile = await (
+        app.fileManager as any
+        ).createNewMarkdownFile(app.workspace.getActiveFile()?.path, "TRMNL/"+this.gradeSet.getTitle()+".html");
+      this.app.vault.modify(TRMNLFile, this.gradeSet.generateTRMNLHTML());
+
+      // Read from present files
+      let first = '[';
+      var html = "";
+
+      const filePath = TRMNLFile.path.substring(0, TRMNLFile.path.lastIndexOf("/"));
+      console.log(filePath);
+      const folder = this.app.vault.getAbstractFileByPath(filePath) as TFolder;
+      console.log(folder);
+      var htmls: string[] = [];
+      if (folder.children.length > 0) {
+        var index = 0;
+        for (var absfile of folder.children) {
+        //folder.children.forEach( async (absfile: TAbstractFile, index: number) => {
+           let file = absfile as TFile;
+           console.log("PROCESSING "+file.name+" for TRMNL");
+           if (file.name !== 'undefined') {
+              let data = await app.vault.read( file );
+              first += '{"name": "'+file.name+'", "students": 99 },';
+              console.log("file data = "+data);
+              htmls[index] = '{"html": "'+data+'"},';
+              console.log("------> HTMLS["+index+"] = "+htmls[index]);
+              index += 1;
+           }
+        }
+      }
+
+      first = first.substring(0, first.length-1) + ']';
+
+      html = "[";
+      for (let i=0; i<htmls.length; i++) {
+        html += htmls[i];
+      }
+      html = html.substring(0, html.length-1);
+      html += "]";
       console.log(html);
       
+      // Publish to TRMNL
       trmnl.setHTML(JSON.parse(html));
       let result = trmnl.publish(JSON.parse(first));
     
-      if (! result) {
+      //if (! result) {
         //   DO SOMETHING
-      }
+      //}
     }
 
   }

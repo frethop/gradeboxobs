@@ -1,6 +1,6 @@
 {
   "name": "gradebox-plugin",
-  "version": "1.2",
+  "version": "1.2.7",
   "description": "Welcome to the Gradebox plugin.",
   "main": "main.js",
   "scripts": {

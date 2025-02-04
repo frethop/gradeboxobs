@@ -803,7 +803,7 @@ export class GradeSet {
     generateTRMNLHTML() { 
         console.log("Generating HTML for TRMNL");            
 
-        let html = "<span class='label label--outline'>Class avg = "+this.classAverage().toFixed(2);
+        let html = "<span class='label label--outline'>Class average = "+this.classAverage().toFixed(2);
         if (this.allCategoriesHaveScores()) {
             html += "</span>";
         } else {
@@ -821,7 +821,9 @@ export class GradeSet {
                     this.students.forEach( (student) => {
                         total += category.studentScore(student);
                     })
+                    console.log("Total for "+category.name+" is "+total);
                     average = total / this.getStudents();
+                    console.log("Average for "+category.name+" is "+average);
                 } 
 
                 html += "is "+ average.toFixed(2) + "</div>";
