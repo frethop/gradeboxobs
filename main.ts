@@ -110,7 +110,7 @@ export default class GradeboxPlugin extends Plugin {
 
 	gradeBoxView : GradeboxView;
 
-	version: string = "1.2.6 (012725)";
+	version: string = "1.2.7 (020425)";
 
 	rotateRecentFiles(filePath: string) {
 		if (filePath.length == 0) return;

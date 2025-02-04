@@ -803,13 +803,14 @@ export class GradeSet {
     generateTRMNLHTML() { 
         console.log("Generating HTML for TRMNL");            
 
-        let html = "<span class='label label--outline'>Class average = "+this.classAverage().toFixed(2);
+        let html = "<span class='title title--small'>Students: "+this.getStudents()+"</span>";
+        html += "<span class='label label--underline'>Class average = "+this.classAverage().toFixed(2);
         if (this.allCategoriesHaveScores()) {
             html += "</span>";
         } else {
             html += "</span>";
         }
-        html += "</div></div>";
+        //html += "</div></div>";
 
         if (this.categories !== undefined && this.categories !== null) {
             this.categories.forEach( (category) => {

@@ -378,7 +378,7 @@ export class GradeboxView extends ItemView {
            console.log("PROCESSING "+file.name+" for TRMNL");
            if (file.name !== 'undefined') {
               let data = await app.vault.read( file );
-              first += '{"name": "'+file.name+'", "students": 99 },';
+              first += '{"name": "'+file.name.replace(".html.md", "")+'" },';
               console.log("file data = "+data);
               htmls[index] = '{"html": "'+data+'"},';
               console.log("------> HTMLS["+index+"] = "+htmls[index]);
